@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desafio: Ache o Golpe</title>
+<style>
+/*
+VOICE: direto, simples, de jogo rápido para leigos
+IDEA: uma lupa de detetive sobre telas de celular com golpes
+PICTURE: o próprio celular com o anúncio, toque nos sinais
+COLOUR and TYPE: branco, vermelho alerta, amarelo atenção, texto preto; Arial
+LAYOUT: uma coluna, celular em cima, lista de sinais embaixo
+*/
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#141414);--ink:light-dark(#111111,#f2f2f2);--soft:light-dark(#f4f1ec,#1f1f1f);--line:light-dark(#ddd6cc,#333);--red:#d62828;--yel:#f4a300;--ok:#2e7d32;--phone:light-dark(#ffffff,#202020)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Arial,Helvetica,sans-serif;overflow-x:clip}
+.top{background:var(--red);color:#fff;padding:22px max(5vw,16px) 18px}
+.top h1{margin:0;font-size:clamp(28px,6vw,42px);line-height:1.05;text-wrap:balance}
+.top p{margin:6px 0 0;max-width:60ch}
+.steps{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.steps span{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:14px}
+.steps span.on{background:#fff;color:var(--red);font-weight:700}
+.wrap{max-width:1000px;margin:0 auto;padding:24px max(4vw,16px) 48px;display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:28px;align-items:start}
+@media(max-width:760px){.wrap{grid-template-columns:minmax(0,1fr)}}
+.phone{background:#111;border-radius:34px;padding:12px;box-shadow:0 16px 40px rgba(0,0,0,.25);max-width:380px;margin:0 auto;width:100%}
+.screen{background:var(--phone);border-radius:24px;overflow:hidden;min-height:520px;position:relative}
+.bar{display:flex;justify-content:space-between;font-size:12px;padding:8px 16px;color:var(--ink);opacity:.7}
+.h{cursor:pointer;border-radius:8px;outline:2px dashed transparent;outline-offset:2px;transition:outline-color .2s,background .2s;position:relative}
+.h:hover,.h:focus-visible{outline-color:var(--yel)}
+.h.found{outline:3px solid var(--red);background:rgba(214,40,40,.08)}
+.h.nope{animation:shake .35s}
+.h .tag{position:absolute;top:-10px;right:-6px;background:var(--red);color:#fff;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:none;align-items:center;justify-content:center}
+.h.found .tag{display:flex}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media(prefers-reduced-motion:reduce){.h.nope{animation:none}}
+/* cenário 1 */
+.ig-head{display:flex;align-items:center;gap:10px;padding:8px 12px}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--yel),var(--red));flex:none}
+.ig-head b{display:block;font-size:14px}.ig-head small{font-size:12px;opacity:.7}
+.prod{height:200px;background:var(--soft);display:flex;align-items:center;justify-content:center;margin:0 12px}
+.cap{padding:10px 12px;font-size:14px}
+.price{font-size:22px;font-weight:700;color:var(--red)}
+.price s{font-size:14px;color:var(--ink);opacity:.6;font-weight:400}
+/* cenário 2 */
+.url{margin:4px 10px;background:var(--soft);border-radius:20px;padding:8px 12px;font-size:13px;display:flex;gap:6px;align-items:center}
+.url em{font-style:normal;color:var(--red);font-weight:700;font-size:12px}
+.site{padding:10px 14px}
+.logo{font-weight:800;font-size:20px}
+.banner{background:var(--yel);color:#111;border-radius:10px;padding:10px;margin:10px 0;font-weight:700;text-align:center}
+.item{display:flex;gap:12px;align-items:center;margin:8px 0}
+.thumb{width:80px;height:80px;border-radius:10px;background:var(--soft);flex:none;display:flex;align-items:center;justify-content:center}
+.foot{font-size:12px;opacity:.85;margin-top:10px;padding:8px;border-top:1px solid var(--line)}
+/* cenário 3 */
+.chat-h{background:var(--soft);padding:10px 14px;font-size:14px}
+.chat{padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{background:var(--soft);border-radius:4px 16px 16px 16px;padding:10px 12px;font-size:14px;max-width:92%}
+.link{color:var(--red);text-decoration:underline;word-break:break-all}
+/* painel */
+.panel h2{font-size:24px;margin:0 0 4px;line-height:1.15}
+.count{font-size:40px;font-weight:800;color:var(--red);line-height:1}
+.count small{font-size:16px;color:var(--ink);font-weight:400}
+.hint{margin:8px 0 14px;padding:10px 12px;border-radius:10px;background:var(--soft);min-height:46px}
+.hint.bad{border-left:4px solid var(--yel)}.hint.good{border-left:4px solid var(--red)}
+ol.list{padding-left:22px;margin:0}
+ol.list li{margin:6px 0}
+ol.list li.hide{color:transparent;background:var(--soft);border-radius:6px;user-select:none}
+ol.list li.hide::marker{color:var(--ink)}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{font:inherit;font-weight:700;min-height:44px;padding:10px 18px;border-radius:12px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+button.main{background:var(--red);border-color:var(--red);color:#fff}
+button:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
+.note{font-size:13px;opacity:.75;margin-top:14px}
+.end{max-width:720px;margin:0 auto;padding:32px max(4vw,16px) 56px}
+.end h2{font-size:clamp(28px,5vw,40px);line-height:1.05;margin:0 0 10px}
+.end ul{padding-left:20px}.end li{margin:8px 0}
+.big{font-size:56px;font-weight:800;color:var(--red);line-height:1}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Desafio: ache o golpe</h1>
+  <p>Toque nas partes da tela que mostram sinais de golpe. Cada cenário tem 5 sinais escondidos.</p>
+  <div class="steps" id="steps"></div>
+</header>
+<main id="app"></main>
+<script>
+{
+const S=[
+{nome:"Anúncio em rede social",
+ tela:`<div class="bar"><span>9:41</span><span>Instagram</span></div>
+ <div class="ig-head"><div class="av"></div><div class="h" data-k="0" tabindex="0" role="button"><b>@tenis.outlet.oficial2026</b><small>Perfil criado há 2 semanas · 312 seguidores</small><span class="tag">1</span></div></div>
+ <div class="prod h" data-k="x" tabindex="0" role="button"><svg width="150" height="90" viewBox="0 0 150 90"><path d="M10 60 Q20 30 55 35 L80 20 Q95 40 140 50 L140 70 L10 70Z" fill="#d62828"/><rect x="10" y="68" width="130" height="10" rx="4" fill="#111"/></svg></div>
+ <div class="cap">
+  <div class="h" data-k="1" tabindex="0" role="button"><span class="price">R$ 89,90 <s>R$ 899,00</s></span><span class="tag">2</span></div>
+  <p class="h" data-k="2" tabindex="0" role="button">ÚLTIMAS 3 UNIDADES! Promoção acaba hoje à meia-noite!<span class="tag">3</span></p>
+  <p class="h" data-k="3" tabindex="0" role="button">Pagamento somente via Pix. Chama no direct!<span class="tag">4</span></p>
+  <p class="h" data-k="x" tabindex="0" role="button">Tamanhos do 34 ao 44. Várias cores.</p>
+  <p class="h" data-k="4" tabindex="0" role="button" style="opacity:.7;font-size:13px">Comentários desativados nesta publicação<span class="tag">5</span></p>
+ </div>`,
+ sinais:["Perfil novo e com poucos seguidores, mesmo dizendo ser oficial.","Preço muito abaixo do normal (90% de desconto).","Pressa: poucas unidades e prazo curto para você não pensar.","Pagamento só por Pix, que é difícil de cancelar.","Comentários desativados para esconder reclamações."],
+ ok:"Isso é comum em qualquer anúncio, não é sinal de golpe."},
+{nome:"Site de loja",
+ tela:`<div class="bar"><span>9:41</span><span>Navegador</span></div>
+ <div class="url h" data-k="0" tabindex="0" role="button"><em>⚠ Não seguro</em> megalar-ofertas-oficial.shop<span class="tag">1</span></div>
+ <div class="site">
+  <div class="logo h" data-k="x" tabindex="0" role="button">MegaLar</div>
+  <div class="banner h" data-k="1" tabindex="0" role="button">QUEIMA TOTAL: até 85% OFF em celulares<span class="tag">2</span></div>
+  <div class="item"><div class="thumb"><svg width="34" height="58" viewBox="0 0 34 58"><rect x="2" y="2" width="30" height="54" rx="6" fill="#111"/><rect x="5" y="7" width="24" height="42" rx="2" fill="#f4a300"/></svg></div>
+   <div class="h" data-k="x" tabindex="0" role="button"><b>Smartphone X12 128GB</b><br><span style="font-size:13px">Tela 6,5". Câmera tripla.</span></div></div>
+  <p class="h" data-k="2" tabindex="0" role="button"><b>R$ 499,00</b> no Pix ou boleto. Cartão indisponível no momento.<span class="tag">3</span></p>
+  <p class="h" data-k="3" tabindex="0" role="button" style="font-size:14px">Dúvidas? Fale só pelo WhatsApp. Não temos SAC.<span class="tag">4</span></p>
+  <div class="foot h" data-k="4" tabindex="0" role="button">© MegaLar. Todos os direitos reservados.<br>(sem CNPJ, sem endereço, sem telefone)<span class="tag">5</span></div>
+ </div>`,
+ sinais:["Endereço estranho, com palavras extras e final .shop, e aviso de site não seguro.","Desconto grande demais em produto caro.","Cartão de crédito bloqueado, só aceita Pix ou boleto.","Contato só por WhatsApp, sem SAC.","Rodapé sem CNPJ, endereço ou telefone da empresa."],
+ ok:"Isso aparece em lojas reais também, não é o problema aqui."},
+{nome:"Mensagem de entrega",
+ tela:`<div class="bar"><span>9:41</span><span>Mensagens</span></div>
+ <div class="chat-h h" data-k="0" tabindex="0" role="button"><b>+55 11 9 8xxx-x731</b><br><small>Número não salvo nos contatos</small><span class="tag">1</span></div>
+ <div class="chat">
+  <div class="msg h" data-k="x" tabindex="0" role="button">Olá! Informamos sobre seu pedido.</div>
+  <div class="msg h" data-k="1" tabindex="0" role="button">Sua encomenda ficou retida na fiscalização e precisa pagar uma taxa de R$ 37,90 para liberar.<span class="tag">2</span></div>
+  <div class="msg h" data-k="2" tabindex="0" role="button">Se não pagar em 24 horas o objeto sera devolvido ao remetente.<span class="tag">3</span></div>
+  <div class="msg h" data-k="3" tabindex="0" role="button">Pague agora: <span class="link">bit.ly/entrega-libera-taxa</span><span class="tag">4</span></div>
+  <div class="msg h" data-k="4" tabindex="0" role="button">Informe tambem seu CPF e os dados do cartão no link para confirmar.<span class="tag">5</span></div>
+  <div class="msg h" data-k="x" tabindex="0" role="button">Obrigado.</div>
+ </div>`,
+ sinais:["Mensagem de número desconhecido, não de um canal oficial.","Cobrança de taxa surpresa para liberar a encomenda.","Ameaça com prazo curto e erros de português.","Link encurtado e estranho, fora do site oficial.","Pede CPF e dados do cartão, o que empresa séria não faz por mensagem."],
+ ok:"Essa parte sozinha não é sinal de golpe."}
+];
+let i=0,score=[0,0,0],found=new Set(),shown=false;
+const app=document.getElementById('app'),steps=document.getElementById('steps');
+function drawSteps(){steps.innerHTML=S.map((s,j)=>`<span class="${j===i?'on':''}">${j+1}. ${s.nome}</span>`).join('')+`<span class="${i===3?'on':''}">Resultado</span>`}
+function render(){
+ drawSteps();
+ if(i>=S.length)return end();
+ const s=S[i];found=new Set();shown=false;
+ app.innerHTML=`<div class="wrap"><div class="phone"><div class="screen" id="scr">${s.tela}</div></div>
+ <section class="panel"><h2>Cenário ${i+1}: ${s.nome}</h2>
+ <div class="count" id="ct">0<small> de 5 sinais</small></div>
+ <div class="hint" id="hint">Toque em uma parte da tela que parece suspeita.</div>
+ <ol class="list" id="list">${s.sinais.map(t=>`<li class="hide">${t}</li>`).join('')}</ol>
+ <div class="btns"><button id="rev">Mostrar respostas</button><button class="main" id="nx">${i<S.length-1?'Próximo cenário':'Ver resultado'}</button></div>
+ <p class="note">Exemplo fictício, criado para o desafio. Nomes, números e links não existem.</p></section></div>`;
+ document.getElementById('scr').querySelectorAll('.h').forEach(el=>{
+  const go=e=>{e.stopPropagation();pick(el)};
+  el.addEventListener('click',go);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go(e)}});
+ });
+ document.getElementById('rev').onclick=()=>{shown=true;S[i].sinais.forEach((_,k)=>mark(k,false));hint('Todos os sinais estão marcados em vermelho.','good')};
+ document.getElementById('nx').onclick=()=>{score[i]=shown?Math.min(score[i],found.size):found.size;i++;render();window.scrollTo(0,0)};
+}
+function hint(t,c){const h=document.getElementById('hint');h.textContent=t;h.className='hint '+(c||'')}
+function mark(k,count){
+ document.querySelectorAll(`#scr .h[data-k="${k}"]`).forEach(e=>e.classList.add('found'));
+ document.querySelectorAll('#list li')[k].classList.remove('hide');
+ if(count&&!shown){found.add(k);score[i]=found.size}
+ document.getElementById('ct').innerHTML=`${found.size}<small> de 5 sinais</small>`;
+}
+function pick(el){
+ const k=el.dataset.k;
+ if(k==='x'){el.classList.remove('nope');void el.offsetWidth;el.classList.add('nope');hint(S[i].ok,'bad');return}
+ const n=+k;
+ if(found.has(n)){hint('Você já achou esse sinal.','good');return}
+ mark(n,true);hint('Boa! '+S[i].sinais[n],'good');
+}
+function end(){
+ const t=score.reduce((a,b)=>a+b,0);
+ const msg=t>=13?'Excelente! Você tem olho de detetive para golpes.':t>=9?'Muito bom! Só fique atento aos sinais que passaram.':'Vale revisar os sinais abaixo antes da próxima compra.';
+ app.innerHTML=`<section class="end"><h2>Seu resultado</h2>
+ <div class="big">${t}<span style="font-size:20px;color:var(--ink);font-weight:400"> de 15 sinais</span></div>
+ <p>${msg}</p>
+ <p>${S.map((s,j)=>`${s.nome}: <b>${score[j]} de 5</b>`).join('<br>')}</p>
+ <h3>O que lembrar antes de comprar</h3>
+ <ul><li>Preço bom demais e pressa são os sinais mais comuns.</li><li>Confira o endereço do site e se a loja tem CNPJ, endereço e SAC.</li><li>Prefira cartão de crédito ou cartão virtual. Desconfie de loja que só aceita Pix.</li><li>Nunca clique em link de taxa ou rastreio que chegou por mensagem. Acesse o site oficial.</li><li>Nunca passe CPF ou dados do cartão por mensagem.</li></ul>
+ <div class="btns"><button class="main" id="again">Jogar de novo</button></div></section>`;
+ document.getElementById('again').onclick=()=>{i=0;score=[0,0,0];render()};
+}
+render();
+}
+</script>
+</body>
+</html>
